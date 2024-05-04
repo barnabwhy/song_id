@@ -73,6 +73,8 @@ async fn main() {
             tokio::time::sleep(std::time::Duration::from_secs(seconds_per_read)).await;
             let popped: Vec<i16> = consumer.pop_iter().collect();
             if popped.len() == 0 {
+                println!("Input stream was empty for entire {}s interval. Clearing activity...", seconds_per_read);
+                client2.lock().await.discord.clear_activity().await.unwrap();
                 continue;
             }
 
@@ -120,14 +122,14 @@ async fn record_audio(
 ) -> anyhow::Result<()> {
     let sample_rate = config.sample_rate.0;
     let input_data_fn = move |data: &[i16], _: &cpal::InputCallbackInfo| {
-        let mut output_fell_behind = false;
+        // let mut output_fell_behind = false;
         let data = samples_to_16khz(stereo_pcm_to_mono(data), sample_rate);
         if producer.push_slice(&data) == 0 {
-            output_fell_behind = true;
+            // output_fell_behind = true;
         }
-        if output_fell_behind {
-            eprintln!("output stream fell behind: try increasing latency");
-        }
+        // if output_fell_behind {
+        //     eprintln!("output stream fell behind: try increasing latency");
+        // }
     };
 
     let err_fn = |err: cpal::StreamError| {
