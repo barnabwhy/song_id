@@ -49,7 +49,7 @@ async fn main() {
         .expect("no default input config")
         .config();
 
-    let seconds_per_read = 10;
+    let seconds_per_read = 12;
 
     // Create a delay in case the input and output devices aren't synced.
     let latency_frames = seconds_per_read as f32 * config.sample_rate.0 as f32;
@@ -93,7 +93,7 @@ async fn main() {
         }
     });
 
-    println!("Recording audio... Press Ctrl+C to stop.");
+    println!("Recording audio in {}s intervals... Press Ctrl+C to stop.", seconds_per_read);
 
     signal::ctrl_c().await.expect("Failed to listen for event");
 
