@@ -76,7 +76,7 @@ async fn main() {
                 continue;
             }
 
-            println!("Looking up with signature from {} samples", popped.len());
+            println!("Looking up with signature from {} samples ({}s)", popped.len(), popped.len() as f32 / 16_000.0);
 
             let fingerprint = SignatureGenerator::make_signature_from_buffer(&popped);
             let res = try_recognize_song(fingerprint).await;
