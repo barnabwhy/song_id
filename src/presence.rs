@@ -45,6 +45,12 @@ pub async fn update_presence(client: MutexGuard<'_, Client>, song: &crate::shaza
         .assets(
             ds::activity::Assets::default()
                 .large(song.cover_image.to_owned().unwrap(), song.album_name.to_owned()),
+        )
+        .button(
+            ds::activity::Button {
+                label: "View GitHub".to_owned(),
+                url: "https://github.com/barnabwhy/song_id".to_owned(),
+            }
         );
 
     if let Some(seek) = song.track_seek {
