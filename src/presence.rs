@@ -54,7 +54,7 @@ pub async fn update_presence(client: MutexGuard<'_, Client>, song: &crate::shaza
         );
 
     if let Some(seek) = song.track_seek {
-        let timestamp = song.timestamp.into_timestamp() - seek as i64;
+        let timestamp = song.timestamp.into_timestamp() - seek as i64 - (song.signature.number_samples as i64 / song.signature.sample_rate_hz as i64);
         rp = rp.start_timestamp(timestamp);
     }
     
