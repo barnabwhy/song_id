@@ -1,0 +1,28 @@
+[package]
+name = "song_id"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+cpal = { version = "*", features = [] }
+ringbuf = "0.4.0"
+anyhow = "1.0.82"
+reqwest = { version = "0.12.4", features = ["multipart", "json"] }
+base64 = "0.22.1"
+rusty-chromaprint = "0.2.0"
+hmac = "0.12.1"
+crypto = "0.5.1"
+sha1 = "0.10.6"
+byteorder = "1.5.0"
+crc32fast = "1.4.0"
+rand = "0.8.5"
+rodio = "0.17.3"
+serde_json = "1.0.116"
+serde = { version = "1.0.115", features = ["derive"] }
+uuid = { version = "1.8.0", features = ["v4"] }
+chfft = "0.3.4"
+regex = "1.10.4"
+discord-sdk = "0.3.6"
