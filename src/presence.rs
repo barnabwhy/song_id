@@ -1,5 +1,5 @@
 use discord_sdk as ds;
-use ds::activity::IntoTimestamp;
+use ds::activity::{self, Activity, ActivityArgs, Assets, Button, ButtonKind, IntoTimestamp, Timestamps};
 use tokio::sync::MutexGuard;
 
 pub const APP_ID: ds::AppId = 1236161402050183238;
@@ -44,31 +44,44 @@ pub async fn update_presence(
     client: MutexGuard<'_, Client>,
     song: &crate::shazam::core::thread_messages::SongRecognizedMessage,
 ) {
-    let mut rp = ds::activity::ActivityBuilder::default()
-        .details(song.song_name.to_owned())
-        .state(song.artist_name.to_owned())
-        .button(ds::activity::Button {
-            label: "View GitHub".to_owned(),
-            url: "https://github.com/barnabwhy/song_id".to_owned(),
-        });
+    let button: ButtonKind = ButtonKind::Link(Button {
+        label: "View GitHub".to_string(),
+        url: "https://github.com/barnabwhy/song_id".to_string(),
+    });
+
+    let mut activity = Activity {
+        state: Some(song.artist_name.to_string()),
+        details: Some(song.song_name.to_string()),
+        assets: None,
+        timestamps: None,
+        party: None,
+        buttons_or_secrets: Some(activity::ButtonsOrSecrets::Buttons {
+            buttons: vec![button],
+        }),
+        kind: ds::activity::ActivityKind::Listening,
+        instance: false,
+    };
 
     if let Some(cover_image) = &song.cover_image {
-        rp = rp.assets(ds::activity::Assets::default().large(
-            cover_image,
-            song.album_name.to_owned(),
-        ));
+        activity.assets = Some(Assets::default().large(cover_image, song.album_name.to_owned()));
     }
 
     if let Some(seek) = song.track_seek {
         let timestamp = song.timestamp.into_timestamp()
             - seek as i64
             - (song.signature.number_samples as i64 / song.signature.sample_rate_hz as i64);
-        rp = rp.start_timestamp(timestamp);
+        activity.timestamps = Some(Timestamps {
+            start: Some(timestamp),
+            end: None,
+        });
     }
+
+    let mut activity_args = ActivityArgs::default();
+    activity_args.activity = Some(activity);
 
     client
         .discord
-        .update_activity(rp)
+        .update_activity(activity_args)
         .await
         .expect("[DISCORD] Failed to update presence");
 
