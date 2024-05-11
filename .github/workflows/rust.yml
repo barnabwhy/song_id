@@ -1,0 +1,53 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up cargo cache
+      uses: actions/cache@v4
+      continue-on-error: false
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/            
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: ${{ runner.os }}-cargo-
+        
+    - name: Build
+      run: cargo build --release --verbose
+      
+    - name: upload deb
+      if: matrix.platform == 'ubuntu-22.04'
+      uses: actions/upload-artifact@v4
+      with:
+        name: song_id-deb
+        path: ./target/release/song_id
+
+    - name: upload exe
+      if: matrix.platform == 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: song_id-exe
+        path: ./target/release/song_id.exe
