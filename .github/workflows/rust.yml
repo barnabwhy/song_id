@@ -35,19 +35,26 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: ${{ runner.os }}-cargo-
         
+    - name: Install dependencies (Ubuntu only)
+      if: matrix.platform == 'ubuntu-22.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          alsa
+      
     - name: Build
       run: cargo build --release --verbose
       
-    - name: upload deb
+    - name: Upload Linux binary
       if: matrix.platform == 'ubuntu-22.04'
       uses: actions/upload-artifact@v4
       with:
-        name: song_id-deb
+        name: song_id-linux
         path: ./target/release/song_id
 
-    - name: upload exe
+    - name: Upload Windows binary
       if: matrix.platform == 'windows-latest'
       uses: actions/upload-artifact@v4
       with:
-        name: song_id-exe
+        name: song_id-windows
         path: ./target/release/song_id.exe
