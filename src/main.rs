@@ -36,7 +36,12 @@ pub fn to_bytes(input: &[i16]) -> Vec<u8> {
 async fn main() {
     let host = cpal::default_host();
 
-    let mut devices = host.input_devices().expect("No input device available").collect::<Vec<_>>();
+    let mut devices = host.input_devices().expect("No input devices available.").collect::<Vec<_>>();
+
+    if devices.len() == 0 {
+        eprintln!("No input devices available.");
+        exit(1);
+    }
 
     println!("Select input device:");
     for (i, device) in devices.iter().enumerate() {
