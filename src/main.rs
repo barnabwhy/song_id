@@ -1,4 +1,4 @@
-use std::{process::exit, sync::Arc, thread};
+use std::{io, process::exit, sync::Arc, thread};
 
 use tokio::{signal, sync::Mutex};
 
@@ -36,11 +36,43 @@ pub fn to_bytes(input: &[i16]) -> Vec<u8> {
 async fn main() {
     let host = cpal::default_host();
 
-    let mut devices = host.input_devices().expect("no input device available");
+    let mut devices = host.input_devices().expect("No input device available").collect::<Vec<_>>();
 
-    let device = devices
-        .find(|x| x.name().unwrap().contains("USB AUDIO  CODEC"))
-        .expect("no input device available");
+    println!("Select input device:");
+    for (i, device) in devices.iter().enumerate() {
+        println!("{}: {}", i + 1, device.name().unwrap());
+    }
+
+    println!("Enter the number of the device you want to use:");
+
+    let mut input_line = String::new();
+
+    let mut x: i32;
+    loop {
+        io::stdin()
+            .read_line(&mut input_line)
+            .expect("Failed to read line");
+        let inp = input_line
+            .trim()
+            .parse::<i32>();
+
+        x = match inp {
+            Ok(inp) => inp,
+            Err(_) => {
+                eprintln!("Invalid input. Please enter a number between 1 and {}.", devices.len());
+                continue;
+            }
+        };
+
+        if x < 1 || x > devices.len() as i32 {
+            eprintln!("Invalid input. Please enter a number between 1 and {}.", devices.len());
+            continue;
+        }
+
+        break;
+    };
+
+    let device = devices.drain(..).nth(x as usize - 1).unwrap();
 
     println!("Using device: {}", device.name().unwrap());
 
@@ -64,7 +96,7 @@ async fn main() {
     ));
     let client2 = client.clone();
 
-    tokio::spawn(async move {
+    let rec_thread = tokio::spawn(async move {
         record_audio(producer, &device, &config).await.unwrap();
     });
 
@@ -111,6 +143,8 @@ async fn main() {
             eprintln!("[DISCORD] Failed to clear discord activity: {}", e);
         }
     }
+
+    rec_thread.abort();
 
     exit(0);
 }
