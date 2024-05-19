@@ -44,10 +44,10 @@ pub async fn update_presence(
     client: MutexGuard<'_, Client>,
     song: &crate::shazam::core::thread_messages::SongRecognizedMessage,
 ) {
-    let button: ButtonKind = ButtonKind::Link(Button {
-        label: "View GitHub".to_string(),
-        url: "https://github.com/barnabwhy/song_id".to_string(),
-    });
+    // let button: ButtonKind = ButtonKind::Link(Button {
+    //     label: "View GitHub".to_string(),
+    //     url: "https://github.com/barnabwhy/song_id".to_string(),
+    // });
 
     let mut activity = Activity {
         state: Some(song.artist_name.to_string()),
@@ -55,9 +55,10 @@ pub async fn update_presence(
         assets: None,
         timestamps: None,
         party: None,
-        buttons_or_secrets: Some(activity::ButtonsOrSecrets::Buttons {
-            buttons: vec![button],
-        }),
+        // buttons_or_secrets: Some(activity::ButtonsOrSecrets::Buttons {
+        //     buttons: vec![button],
+        // }),
+        buttons_or_secrets: None,
         kind: ds::activity::ActivityKind::Listening,
         instance: false,
     };

@@ -105,15 +105,23 @@ async fn main() {
         record_audio(producer, &device, &config).await.unwrap();
     });
 
-    tokio::spawn(async move {
+    let req_thread = tokio::spawn(async move {
+        let mut was_empty_last = false;
         loop {
             tokio::time::sleep(std::time::Duration::from_secs(seconds_per_read)).await;
             let popped: Vec<i16> = consumer.pop_iter().collect();
-            if popped.len() == 0 {
-                println!("Input stream was empty for entire {}s interval. Clearing activity...", seconds_per_read);
+            if popped.len() == 0 || popped.iter().all(|&x| x <= 16) {
+                if was_empty_last {
+                    continue;
+                }
+                was_empty_last = true;
+
+                println!("Input stream was empty/silent for entire {}s interval. Clearing activity...", seconds_per_read);
                 client2.lock().await.discord.clear_activity().await.unwrap();
                 continue;
             }
+
+            was_empty_last = false;
 
             println!("Looking up with signature from {} samples ({}s)", popped.len(), popped.len() as f32 / 16_000.0);
 
@@ -121,7 +129,11 @@ async fn main() {
             let res = try_recognize_song(fingerprint).await;
             match res {
                 Ok(song) => {
-                    println!("Song recognized: {} - {}", song.song_name, song.artist_name);
+                    if let Some(seek) = song.track_seek {
+                        println!("Song recognized: {} - {} @ {}:{:02}", song.song_name, song.artist_name, (seek / 60.0) as u32, (seek % 60.0) as u8);
+                    } else {
+                        println!("Song recognized: {} - {}", song.song_name, song.artist_name);
+                    }
                     update_presence(client2.lock().await, &song).await;
                 }
                 Err(e) => {
@@ -138,6 +150,9 @@ async fn main() {
 
     println!("Received Ctrl+C event. Shutting down...");
 
+    rec_thread.abort();
+    req_thread.abort();
+
     let client_lock = client.lock().await;
 
     match client_lock.discord.clear_activity().await {
@@ -148,8 +163,6 @@ async fn main() {
             eprintln!("[DISCORD] Failed to clear discord activity: {}", e);
         }
     }
-
-    rec_thread.abort();
 
     exit(0);
 }
